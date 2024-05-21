@@ -5,6 +5,10 @@ import {v4 as uuidv4} from "uuid";
 import multerS3 from "multer-s3";
 import { S3Client } from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
+import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
+import FormData from "form-data";
+import fs from "fs";
+import path from "path";
 
 dotenv.config();
 
@@ -42,6 +46,23 @@ app.get('/', (_req: Request, res: Response) => {
   res.send('Hello World!')
 })
 
+app.get('/upload/getPresignedUrl', async (req, res) => {
+  const {url, fields} = await createPresignedPost(s3, {
+        Bucket: "ytvideoraw",
+        Key: `user`,
+        Conditions: [
+            { bucket: "ytvideoraw" },
+            ["starts-with", "$key", `user`],
+            ["content-length-range", 0, 1000000],
+        ],
+        Fields: {
+            key: `user`,
+        },
+        Expires: 600, // Expires in 10 minutes
+    });
+  res.json({fields, url});
+})
+
 app.post('/upload/video', upload.single('video'), (req: Request, res: Response) => {
   try {
     if (!req.file) {
@@ -69,6 +90,8 @@ app.post('/upload/video', upload.single('video'), (req: Request, res: Response) 
     res.status(500).send('Error uploading file.');
   }
 })
+
+
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)

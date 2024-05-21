@@ -38,24 +38,28 @@ const VideoForm: React.FC = () =>{
     }
 
     console.log(name, video);
-
-    const formdata = new FormData();
-    video && formdata.append('video', video, video?.name);
-
-    const data = {
-      vidooName: name,
-      formdata: formdata
-    }
-
+ 
     try {
-      const req = await fetch('http://localhost:8080/upload/video' ,{
-        method: 'POST',
-        body: formdata
-      });
+      const req = await fetch('http://localhost:8080/upload/getPresignedUrl');
       const res = await req.json();
-      console.log(res);
+      console.log(res)
+
+      const {url, fields} = res;
+
+      const form = new FormData();
+
+      Object.entries(fields).map(([field, value]) => {
+        typeof value === "string" && form.append(field, value);
+      })
+      form.append('file', video);
+      
+      await fetch(url, {
+        method: 'POST',
+        body: form
+      }); 
+
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
 
   }
