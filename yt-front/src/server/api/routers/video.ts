@@ -2,10 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import HttpStatusCodes from "@/server/utils/HttpStatusCodes";
 import { db } from "@/server/db";
-import { title } from "process";
-import { check } from "prettier";
-import { channel } from "diagnostics_channel";
-import { userInfo } from "os";
+import { getServerSideProps } from "next/dist/build/templates/pages";
 
 export const videoRotuer = createTRPCRouter({
   uploadVideo: publicProcedure
@@ -112,6 +109,144 @@ export const videoRotuer = createTRPCRouter({
         await db.$disconnect();
       }
 
-    })
+    }),
+  getVideoByTitle: publicProcedure
+    .input(z.object({
+      title: z.string(),
+    }))
+    .mutation(async opts => {
+      try {
+        const video = await db.video.findFirst({ where: { title: opts.input.title } });
+
+        if (!video) {
+          return {
+            code: HttpStatusCodes.NOT_FOUND,
+            message: 'video not found',
+            video: null
+          }
+        }
+
+        return {
+          code: HttpStatusCodes.OK,
+          message: 'video found',
+          video
+        }
+      } catch (err) {
+        console.log(err);
+        return {
+          code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+          message: 'INTERNAL_SERVER_ERROR',
+          video: null
+        }
+      } finally {
+        await db.$disconnect();
+      }
+
+    }),
+  getVideoById: publicProcedure
+    .input(z.object({
+      id: z.number(),
+    }))
+    .mutation(async opts => {
+      try {
+        const video = await db.video.findFirst({ where: { id: opts.input.id } });
+
+        if (!video) {
+          return {
+            code: HttpStatusCodes.NOT_FOUND,
+            message: 'video not found',
+            video: null
+          }
+        }
+
+        return {
+          code: HttpStatusCodes.OK,
+          message: 'video found',
+          video
+        }
+      } catch (err) {
+        console.log(err);
+        return {
+          code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+          message: 'INTERNAL_SERVER_ERROR',
+          video: null
+        }
+      } finally {
+        await db.$disconnect();
+      }
+    }),
+  getVideoByTag: publicProcedure
+    .input(z.object({
+      tag: z.string(),
+    }))
+    .mutation(async opts => {
+      try {
+        const video = await db.video.findMany({ where: { tags: { has: opts.input.tag } } });
+
+        if (video.length === 0) {
+          return {
+            code: HttpStatusCodes.NOT_FOUND,
+            message: 'video not found',
+            video: null
+          }
+        }
+
+        return {
+          code: HttpStatusCodes.OK,
+          message: 'video found',
+          video
+        }
+      } catch (err) {
+        console.log(err);
+        return {
+          code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+          message: 'INTERNAL_SERVER_ERROR',
+          video: null
+        }
+      } finally {
+        await db.$disconnect();
+      }
+    }),
+  getComments: publicProcedure
+    .input(z.object({
+    id: z.number()
+  }))
+  .mutation(async opts => {
+      const { id } = opts.input;
+
+    try {
+      const video = await db.video.findFirst({ where: {id} });
+
+      if (!video) {
+        return {
+          code: HttpStatusCodes.NOT_FOUND,
+          message: "No video found",
+          comments: null
+        }
+      }
+
+      const getComments = await db.comment.findMany({
+        where: {
+          videoId: video.id
+        }
+      })
+      
+      return {
+        code: HttpStatusCodes.OK,
+        message: 'comments found',
+        comments: getComments
+      }
+
+    } catch (err) {
+        console.log(err);
+        return {
+          code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+          message: 'INTERNAL_SERVER_ERROR',
+          video: null
+        }
+      } finally {
+        await db.$disconnect();
+      } 
+  })
 })
 
