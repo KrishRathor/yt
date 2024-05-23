@@ -10,7 +10,7 @@ import { initTRPC } from "@trpc/server";
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import superjson from "superjson";
 import { ZodError } from "zod";
-
+import jwt from "jsonwebtoken";
 import { db } from "@/server/db";
 
 /**
@@ -45,8 +45,34 @@ const createInnerTRPCContext = (_opts: CreateContextOptions) => {
  *
  * @see https://trpc.io/docs/context
  */
-export const createTRPCContext = (_opts: CreateNextContextOptions) => {
-  return createInnerTRPCContext({});
+export const createTRPCContext = async (opts: CreateNextContextOptions) => {
+
+  const { req } = opts;
+
+  const token = req.headers.authorization?.split(' ')[1];
+  let username: string | null = null;
+  console.log(token);
+  if (token) {
+    const payload = jwt.decode(token);
+    console.log(payload);
+    (typeof payload === 'object' && payload) ? username = payload.username : null;
+  }
+
+  if (username) {
+    const user = await db.user.findFirst({
+      where: {
+        username
+      }
+    })
+    if (user) {
+      return {
+        username
+      }
+    }
+  }
+
+  return {}
+
 };
 
 /**

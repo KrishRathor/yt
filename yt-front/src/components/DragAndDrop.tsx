@@ -53,13 +53,14 @@ const VideoForm: React.FC = () =>{
       })
       form.append('file', video);
       
-      await fetch(url, {
+      const r = await fetch(url, {
         method: 'POST',
         body: form
       }); 
+      console.log(r)
 
-    } catch (error) {
-      console.log(error)
+    } catch (err) {
+      console.log(err);
     }
 
   }
