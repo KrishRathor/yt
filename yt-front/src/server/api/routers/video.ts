@@ -209,35 +209,35 @@ export const videoRotuer = createTRPCRouter({
     }),
   getComments: publicProcedure
     .input(z.object({
-    id: z.number()
-  }))
-  .mutation(async opts => {
+      id: z.number()
+    }))
+    .mutation(async opts => {
       const { id } = opts.input;
 
-    try {
-      const video = await db.video.findFirst({ where: {id} });
+      try {
+        const video = await db.video.findFirst({ where: { id } });
 
-      if (!video) {
+        if (!video) {
+          return {
+            code: HttpStatusCodes.NOT_FOUND,
+            message: "No video found",
+            comments: null
+          }
+        }
+
+        const getComments = await db.comment.findMany({
+          where: {
+            videoId: video.id
+          }
+        })
+
         return {
-          code: HttpStatusCodes.NOT_FOUND,
-          message: "No video found",
-          comments: null
+          code: HttpStatusCodes.OK,
+          message: 'comments found',
+          comments: getComments
         }
-      }
 
-      const getComments = await db.comment.findMany({
-        where: {
-          videoId: video.id
-        }
-      })
-      
-      return {
-        code: HttpStatusCodes.OK,
-        message: 'comments found',
-        comments: getComments
-      }
-
-    } catch (err) {
+      } catch (err) {
         console.log(err);
         return {
           code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
@@ -246,7 +246,37 @@ export const videoRotuer = createTRPCRouter({
         }
       } finally {
         await db.$disconnect();
-      } 
-  })
+      }
+    }),
+  getVideoByCategory: publicProcedure
+    .input(z.object({
+      category: z.string()
+    }))
+    .mutation(async opts => {
+      try {
+        const { category } = opts.input;
+        const video = await db.video.findMany({
+          where: {
+            category
+          }
+        })
+
+        return {
+          code: HttpStatusCodes.OK,
+          message: "Videos found",
+          category
+        }
+
+      } catch (err) {
+        console.log(err);
+        return {
+          code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+          message: 'INTERNAL_SERVER_ERROR',
+          video: null
+        }
+      } finally {
+        await db.$disconnect();
+      }
+    })
 })
 

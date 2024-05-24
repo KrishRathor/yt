@@ -1,30 +1,16 @@
+import { Navbar } from "@/components/Navbar";
+import { Hero } from "@/components/home/Hero";
+import { Sidebar } from "@/components/home/Sidebar";
 
-import { api } from "@/utils/api";
-
-export default function Home() {
-  const hello = api.post.hello.useQuery({ text: "from tRPC" });
-
-  const registerUser = api.user.registerUser.useMutation({
-    onSuccess: (data) => {
-      console.log(data);
-    }
-  });
-
-  const loginUser = api.user.login.useMutation({
-    onSuccess: data => {
-      console.log(data);
-    }
-  })
+export default function Home() {  
 
   return (
-    <div className="text-black " >
-      hi there
-
-      <button onClick={() => loginUser.mutate({
-        email: 'email',
-        password: 'ass',
-      })} >click</button>
-
+    <div className="bg-[#0F0F0F] text-white h-[100vh] w-[100vw] m-0 p-0" >
+      <Navbar />
+      <div className="flex" >
+        <Sidebar />
+        <Hero />
+      </div>
     </div>
   );
 }

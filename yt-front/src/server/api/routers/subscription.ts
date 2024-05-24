@@ -3,6 +3,8 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 import HttpStatusCodes from "@/server/utils/HttpStatusCodes";
 import { db } from "@/server/db";
 import { reportUnusedDisableDirectives } from ".eslintrc.cjs";
+import { userInfo } from "os";
+import { use } from "react";
 
 export const subscribeRouter = createTRPCRouter({
   subscribe: publicProcedure
@@ -147,14 +149,31 @@ export const subscribeRouter = createTRPCRouter({
 
       try {
 
-        
+        const user = await db.user.findFirst({ where: { username: opts.ctx.username } });
+
+        if (!user) {
+          return {
+            code: HttpStatusCodes.NOT_FOUND,
+            message: "user not found",
+            channels: null
+          }
+        }
+
+        const channels = await db.subscription.findMany({ where: { subscriberUserId: user.id } });
+        const channelsId = channels.map((chnl => chnl.subscribedToChannelId));
+
+        return {
+          code: HttpStatusCodes.OK,
+          message: "channels not found",
+          channels: null
+        }
 
       } catch (error) {
         console.log(error);
         return {
           code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
           message: "INTERNAL_SERVER_ERROR",
-          subscribe: null
+          channels: null
         }
       } finally {
         await db.$disconnect();
