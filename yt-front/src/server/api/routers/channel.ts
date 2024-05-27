@@ -2,17 +2,19 @@ import { number, z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import HttpStatusCodes from "@/server/utils/HttpStatusCodes";
 import { db } from "@/server/db";
+import { channel } from "diagnostics_channel";
 
 export const channelRouter = createTRPCRouter({
   createChannel: publicProcedure
     .input(z.object({
       channelName: z.string(),
       description: z.string(),
+      channelId: z.string(),
       profilePictureUrl: z.string().optional(),
       coverPhotoUrl: z.string().optional()
     }))
     .mutation(async opts => {
-      const { channelName, description, profilePictureUrl, coverPhotoUrl } = opts.input;
+      const { channelName, channelId, description, profilePictureUrl, coverPhotoUrl } = opts.input;
 
       if (!opts.ctx.username) {
         return {
@@ -35,18 +37,18 @@ export const channelRouter = createTRPCRouter({
         }
 
         const isChannel = await db.channel.findFirst({
-        where: {
-          channelName: channelName
-        }
-      }) 
+          where: {
+            channelName: channelName
+          }
+        })
 
-      if (isChannel) {
-        return {
-          code: HttpStatusCodes.BAD_REQUEST,
-          message: "channel name already taken",
-          channel: null
+        if (isChannel) {
+          return {
+            code: HttpStatusCodes.BAD_REQUEST,
+            message: "channel name already taken",
+            channel: null
+          }
         }
-      }
 
         const channel = await db.channel.create({
           data: {
@@ -54,7 +56,8 @@ export const channelRouter = createTRPCRouter({
             channelName,
             description,
             profilePictureUrl,
-            coverPhotoUrl
+            coverPhotoUrl,
+            channelId
           }
         })
 
@@ -74,5 +77,46 @@ export const channelRouter = createTRPCRouter({
       } finally {
         await db.$disconnect();
       }
+    }),
+  getChannel: publicProcedure
+    .input(z.object({
+      channelId: z.string()
+    }))
+    .mutation(async opts => {
+      const { channelId } = opts.input;
+
+      try {
+
+        const getChannel = await db.channel.findFirst({
+          where: {
+            channelId
+          }
+        })
+
+        if (!getChannel) {
+          return {
+            code: HttpStatusCodes.NOT_FOUND,
+            message: "Channel not found",
+            channel: null
+          }
+        }
+
+        return {
+          code: HttpStatusCodes.OK,
+          message: "Channel found",
+          channel: getChannel
+        }
+
+      } catch (err) {
+        console.log(err);
+      return {
+        code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+        message: "INTERNAL_SERVER_ERROR",
+        channel: null
+      }
+      } finally {
+        await db.$disconnect();
+      }
+
     })
 })

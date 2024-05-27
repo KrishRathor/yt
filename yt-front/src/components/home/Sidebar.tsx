@@ -1,9 +1,25 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { api } from "@/utils/api";
+import { keyframes } from "@emotion/react";
+import { useRouter } from "next/router";
 
 interface CardProps {
   title: string,
   imageUrl: string,
+}
+
+interface Channel {
+  id: number;
+  userId: number;
+  channelName: string;
+  channelId: string;
+  description: string;
+  creationDate: Date; // Alternatively, you can use Date if you plan to parse it into a Date object
+  profilePictureUrl: string | null;
+  coverPhotoUrl: string | null;
+  subscribersCount: number;
+  totalViews: number;
 }
 
 export const Sidebar: React.FC = () => {
@@ -12,21 +28,28 @@ export const Sidebar: React.FC = () => {
     { title: 'Your Channel', imageUrl: '/channel.png' },
     { title: 'History', imageUrl: '/history.png' },
     { title: 'Playlists', imageUrl: '/playlist.png' }
-  ] 
-
-  const Subscriptions: CardProps[] = [
-    { title: 'Harkirat Singh', imageUrl: 'https://github.com/shadcn.png' },
-    { title: 'ThePrimeTime', imageUrl: 'https://github.com/shadcn.png' },
-    { title: 'Vikas Divyakirti', imageUrl: 'https://github.com/shadcn.png' },
-    { title: 'Backend Banter', imageUrl: 'https://github.com/shadcn.png' },
-    { title: 'ForrestKnight', imageUrl: 'https://github.com/shadcn.png' },
-    { title: 'Fireship', imageUrl: 'https://github.com/shadcn.png' }
   ]
 
   const Settings: CardProps[] = [
     { title: 'Settings', imageUrl: '/settings.png' },
     { title: 'Send Feedback', imageUrl: '/feedback.png' }
   ]
+  
+  const router = useRouter();
+  const [subscribedChannels, setSubscribedChannels] = useState<(Channel | null)[]>([]);
+
+  const getSubscribedChannels = api.subscriber.getAllSubscribedChannels.useMutation({
+    onSuccess: data => {
+      console.log(data);
+      if (data.code === 200) {
+        data.channels && setSubscribedChannels(data.channels);
+      }
+    }
+  })
+
+  useEffect(() => {
+    getSubscribedChannels.mutateAsync();
+  }, []);
 
   return (
     <div className="overflow-y-auto w-[20vw] h-[90vh] ml-2 " >
@@ -44,11 +67,17 @@ export const Sidebar: React.FC = () => {
       <span className="text-2xl ml-2 py-2">Subscriptions</span>
       <div className="overflow-y-auto h-fit max-h-[45vh] " >
         {
-          Subscriptions.map((chnl, key) => (
-            <div key={key} >
-            <ChannelCard title={chnl.title} imageUrl={chnl.imageUrl} /> 
-            </div>
-          ))
+          subscribedChannels.map((chnl) => {
+            if (chnl) {
+              return (
+                <div key={chnl.id} onClick={() => {
+                    router.push(`/channel?channel=${chnl.channelId}`)
+                }} >
+                  <ChannelCard imageUrl={chnl.profilePictureUrl ?? 'https://github.com/shadcn.png'} title={chnl.channelName} />
+                </div>
+              )
+            }
+          })
         }
       </div>
       <hr className="border border-[#272727] mt-4" />
@@ -65,24 +94,24 @@ export const Sidebar: React.FC = () => {
 }
 
 const Card: React.FC<CardProps> = (props) => {
-  
+
   const { title, imageUrl } = props;
-  
+
   return (
     <div className="flex mt-2 hover:bg-[#272727] h-[4vh] cursor-pointer py-1 rounded-md" >
-      <Image className="ml-4 rounded-full" src={imageUrl} alt={`${title}-icon`} width={20} height={15} /> 
+      <Image className="ml-4 rounded-full" src={imageUrl} alt={`${title}-icon`} width={20} height={15} />
       <span className=" ml-4" >{title}</span>
     </div>
   )
 }
 
 const ChannelCard: React.FC<CardProps> = (props) => {
-  
+
   const { title, imageUrl } = props;
-  
+
   return (
     <div className="flex mt-2 hover:bg-[#272727] h-[4vh] cursor-pointer py-1 rounded-md" >
-      <img className="ml-4 rounded-full" src={imageUrl} alt={`${title}-icon`} width={20} height={15} /> 
+      <img className="ml-4 rounded-full" src={imageUrl} alt={`${title}-icon`} width={20} height={15} />
       <span className="ml-4" >{title}</span>
     </div>
   )

@@ -5,6 +5,10 @@ import { db } from "@/server/db";
 import { reportUnusedDisableDirectives } from ".eslintrc.cjs";
 import { userInfo } from "os";
 import { use } from "react";
+import { check } from "prettier";
+import { api } from "@/utils/api";
+import { channel } from "diagnostics_channel";
+import { warn } from "console";
 
 export const subscribeRouter = createTRPCRouter({
   subscribe: publicProcedure
@@ -162,10 +166,12 @@ export const subscribeRouter = createTRPCRouter({
         const channels = await db.subscription.findMany({ where: { subscriberUserId: user.id } });
         const channelsId = channels.map((chnl => chnl.subscribedToChannelId));
 
+        const channelsMetaData = await Promise.all(channelsId.map(async id => await db.channel.findFirst({where: {id}})))
+
         return {
           code: HttpStatusCodes.OK,
-          message: "channels not found",
-          channels: null
+          message: "channels found",
+          channels: channelsMetaData
         }
 
       } catch (error) {
@@ -179,6 +185,63 @@ export const subscribeRouter = createTRPCRouter({
         await db.$disconnect();
       }
 
+    }),
+  isSubscribed: publicProcedure
+    .input(z.object({
+      channelId: z.number()
+    }))
+    .mutation(async opts => {
+      const { channelId } = opts.input;
+
+      try {
+
+        if (!opts.ctx.username) {
+          return {
+            code: HttpStatusCodes.UNAUTHORIZED,
+            message: "Login first",
+            subscribe: false
+          }
+        }
+
+        const user = await db.user.findFirst({
+          where: {
+            username: opts.ctx.username
+          }
+        })
+
+        const checkSubscribe = await db.subscription.findFirst({
+          where: {
+            AND: {
+              subscriberUserId: user?.id,
+              subscribedToChannelId: channelId
+            }
+          }
+        });
+
+        if (!checkSubscribe) {
+          return {
+            code: HttpStatusCodes.OK,
+            message: "unsubscribed",
+            subscribe: false
+          }
+        }
+
+        return {
+          code: HttpStatusCodes.OK,
+          message: "subscribed",
+          subscribe: true
+        }
+
+      } catch (error) {
+        console.log(error);
+        return {
+          code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+          message: "INTERNAL_SERVER_ERROR",
+          subscribe: null
+        }
+      } finally {
+        await db.$disconnect();
+      }
     })
 
 })

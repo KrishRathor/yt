@@ -12,9 +12,10 @@ const Demo: React.FC = () => {
     console.log('clicked!');
     createChannel.mutateAsync({
       description: 'this is a channel',
-      channelName: 'Backend Banter',
-      profilePictureUrl: 'https://yt3.googleusercontent.com/rDbXKsxmY2H5JtCrHtVuqyIJFzo70eIuyummRSQ_k5kXgggCgZmKrlLsNWMLDW3kvBYFYMT2qg=s160-c-k-c0x00ffffff-no-rj',
-      coverPhotoUrl: 'https://yt3.googleusercontent.com/YlN8EJdLEcGg42hhW9tyvCdpOUhnXRt1rTxQvOkyIzgvKihkzMO5_G86fQUhLfSgInEf8cFFDw=w1707-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj'
+      channelId: '@samdish',
+      channelName: 'Unfiltred by Samdish',
+      profilePictureUrl: 'https://yt3.googleusercontent.com/p2CTX0RN7xfMzwkQg21tJeMuR08NBhigUy0r0T6Vr-36b4_ufSUo1o3g3HDKLAaNkx-0qGDeN3s=s160-c-k-c0x00ffffff-no-rj',
+      coverPhotoUrl: 'https://yt3.googleusercontent.com/Zu4JUmuIacLsT5BJZDEm3u1AsJY2VcLxbyFQm66dM6260gP161ULDaHif1ZNCXqs7EZYspKWEQ=w1707-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj'
     })    
   }
 
