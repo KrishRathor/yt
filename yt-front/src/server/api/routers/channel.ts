@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { number, z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import HttpStatusCodes from "@/server/utils/HttpStatusCodes";
 import { db } from "@/server/db";
@@ -33,6 +33,20 @@ export const channelRouter = createTRPCRouter({
             channel: null
           }
         }
+
+        const isChannel = await db.channel.findFirst({
+        where: {
+          channelName: channelName
+        }
+      }) 
+
+      if (isChannel) {
+        return {
+          code: HttpStatusCodes.BAD_REQUEST,
+          message: "channel name already taken",
+          channel: null
+        }
+      }
 
         const channel = await db.channel.create({
           data: {
