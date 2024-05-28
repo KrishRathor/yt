@@ -60,6 +60,7 @@ const Channel: React.FC<ChannelProps> = (props) => {
      typeof channel === "string" && getChannel.mutateAsync({
       channelId: channel
     })
+    setSelectedTab(Tabs.Home);
   }, [channel]);
 
   const getChannel = api.channel.getChannel.useMutation({
@@ -108,7 +109,7 @@ const Channel: React.FC<ChannelProps> = (props) => {
 
             {
               selectedTab === Tabs.Home ? <ChannelHome />
-                : selectedTab === Tabs.Videos ? <ChannelVideo />
+                : selectedTab === Tabs.Videos ? <ChannelVideo channelId={channelFromBackend.channelId} channelName={channelFromBackend.channelName} />
                   : selectedTab === Tabs.Playlists ? <ChannelPlaylists />
                     : selectedTab === Tabs.Community ? <ChannelCommunity /> : ''
             }

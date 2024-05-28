@@ -3,6 +3,7 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 import HttpStatusCodes from "@/server/utils/HttpStatusCodes";
 import { db } from "@/server/db";
 import { channel } from "diagnostics_channel";
+import { httpLink } from "@trpc/client";
 
 export const channelRouter = createTRPCRouter({
   createChannel: publicProcedure
@@ -109,14 +110,85 @@ export const channelRouter = createTRPCRouter({
 
       } catch (err) {
         console.log(err);
-      return {
-        code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
-        message: "INTERNAL_SERVER_ERROR",
-        channel: null
-      }
+        return {
+          code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+          message: "INTERNAL_SERVER_ERROR",
+          channel: null
+        }
       } finally {
         await db.$disconnect();
       }
 
+    }),
+  getAllChannelsOfUser: publicProcedure
+    .mutation(async opts => {
+      try {
+
+        if (!opts.ctx.username) {
+          return {
+            code: HttpStatusCodes.NOT_FOUND,
+            message: "login",
+            channel: null
+          }
+        }
+
+        const user = await db.user.findFirst({ where: { username: opts.ctx.username } });
+
+        if (!user) {
+          return {
+            code: HttpStatusCodes.NOT_FOUND,
+            message: "user not found",
+            channel: null
+          }
+        }
+
+        const channel = await db.channel.findMany({
+          where: {
+            userId: user.id
+          }
+        })
+
+        return {
+          code: HttpStatusCodes.OK,
+          message: "channels found",
+          channel
+        }
+
+      } catch (err) {
+        console.log(err);
+        return {
+          code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+          message: "INTERNAL_SERVER_ERROR",
+          channel: null
+        }
+      } finally {
+        await db.$disconnect();
+      }
+    }),
+  getChannelById: publicProcedure
+    .input(z.object({
+      id: z.number()
+    }))
+    .mutation(async opts => {
+      try {
+        const { id } = opts.input;
+
+        const channel = await db.channel.findFirst({ where: { id } });
+        return {
+          code: HttpStatusCodes.OK,
+          message: "channel found",
+          channel: channel
+        }
+
+      } catch (err) {
+        console.log(err);
+        return {
+          code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+          message: "INTERNAL_SERVER_ERROR",
+          channel: null
+        }
+      } finally {
+        await db.$disconnect();
+      }
     })
 })

@@ -1,12 +1,7 @@
-import { z } from "zod";
+import { string, z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
-import { options } from "prettier-plugin-tailwindcss";
 import HttpStatusCodes from "@/server/utils/HttpStatusCodes";
 import { db } from "@/server/db";
-import { videoRotuer } from "./video";
-import { reportUnusedDisableDirectives } from ".eslintrc.cjs";
-import { comment } from "postcss";
-import { hexToRgb } from "@mui/material";
 
 export const commentRouter = createTRPCRouter({
   addComment: publicProcedure
@@ -205,5 +200,50 @@ export const commentRouter = createTRPCRouter({
         await db.$disconnect();
       }
     }),
+    getCommentByVideo: publicProcedure
+      .input(z.object({
+      videoId: z.number()
+  }))
+  .mutation(async opts => {
+    try {
 
+      const { videoId } = opts.input;
+
+      const video = await db.video.findFirst({
+        where: {
+          id: videoId
+        }
+      })
+
+      if (!video) {
+        return {
+          code: HttpStatusCodes.NOT_FOUND,
+          message: "video not found",
+          comments: null
+        }
+      }
+
+       const comments = await db.comment.findMany({
+        where: {
+          videoId: video.id
+        }
+      })
+
+      return {
+        code: HttpStatusCodes.OK,
+        message: "comments found",
+        comments
+      }
+
+    } catch (error) {
+      console.log(error);
+      return {
+        code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+        message: "INTERNAL_SERVER_ERROR",
+        comments: null
+      }
+    } finally {
+      await db.$disconnect();
+    }
+  })
 })

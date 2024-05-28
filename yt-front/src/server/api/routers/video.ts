@@ -3,6 +3,8 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 import HttpStatusCodes from "@/server/utils/HttpStatusCodes";
 import { db } from "@/server/db";
 import { getServerSideProps } from "next/dist/build/templates/pages";
+import { channel } from "diagnostics_channel";
+import { dataTagSymbol } from "@tanstack/react-query";
 
 export const videoRotuer = createTRPCRouter({
   uploadVideo: publicProcedure
@@ -14,8 +16,7 @@ export const videoRotuer = createTRPCRouter({
       status: z.string(),
       category: z.string(),
       language: z.string(),
-      channelName: z.string(),
-      username: z.string(),
+      channelId: z.string(),
       tags: z.string().array(),
       video: z.string().array()
     }))
@@ -31,29 +32,19 @@ export const videoRotuer = createTRPCRouter({
 
       try {
 
-        const [userByToken, clientUser] = await Promise.all([
-          db.user.findFirst({ where: { username: opts.ctx.username } }),
-          db.user.findFirst({ where: { username: opts.input.username } })
-        ])
+        const user = await db.user.findFirst({
+          where: {
+            username: opts.ctx.username
+          }
+        })
 
-
-
-        if (!clientUser) {
+        if (!user) {
           return {
-            code: HttpStatusCodes.BAD_REQUEST,
-            message: "User doesn't exist",
+            code: HttpStatusCodes.NOT_FOUND,
+            message: "user not found",
             video: null
           }
         }
-
-        if (!(userByToken === clientUser)) {
-          return {
-            code: HttpStatusCodes.UNAUTHORIZED,
-            message: 'UNAUTHORIZED',
-            video: null
-          }
-        }
-
 
         const checkVideoTitle = await db.video.findFirst({ where: { title: opts.input.title } });
 
@@ -65,9 +56,9 @@ export const videoRotuer = createTRPCRouter({
           }
         }
 
-        const { title, tags, status, category, language, description, thumbnailUrl, channelName, video, duration } = opts.input;
+        const { title, tags, status, category, language, description, thumbnailUrl, channelId, video, duration } = opts.input;
 
-        const channel = await db.channel.findFirst({ where: { channelName } });
+        const channel = await db.channel.findFirst({ where: { channelId } });
 
         if (!channel) {
           return {
@@ -80,7 +71,7 @@ export const videoRotuer = createTRPCRouter({
         const createVideo = await db.video.create({
           data: {
             title, description, tags, thumbnailUrl, status, channelId: channel.id, category, language, videoUrl: video,
-            duration, userId: clientUser.id
+            duration, userId: user.id
           }
         })
 
@@ -272,6 +263,82 @@ export const videoRotuer = createTRPCRouter({
         return {
           code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
           message: 'INTERNAL_SERVER_ERROR',
+          video: null
+        }
+      } finally {
+        await db.$disconnect();
+      }
+    }),
+  getVideoByChannel: publicProcedure
+    .input(z.object({
+      channelId: z.string()
+    }))
+    .mutation(async opts => {
+      try {
+        const { channelId } = opts.input;
+
+        const channel = await db.channel.findFirst({ where: { channelId } });
+
+        if (!channel) {
+          return {
+            code: HttpStatusCodes.NOT_FOUND,
+            message: "channel not found",
+            video: null
+          }
+        }
+
+        const videos = await db.video.findMany({
+          where: {
+            channelId: channel.id
+          }
+        })
+
+        return {
+          code: HttpStatusCodes.OK,
+          message: "videos found",
+          video: videos
+        }
+
+      } catch (err) {
+        console.log(err);
+        return {
+          code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+          message: "INTERNAL_SERVER_ERROR",
+          video: null
+        }
+      } finally {
+        await db.$disconnect();
+      }
+    }),
+  getAllVideos: publicProcedure
+    .mutation(async opts => {
+      try {
+
+        const getVideos = await db.video.findMany();
+
+        const data = await Promise.all(getVideos.map(async video => {
+          const channelId = video.channelId;
+          const channel = await db.channel.findFirst({ where: { id: channelId } });
+          if (channel) {
+            return {
+              ...video,
+              channelName: channel.channelName,
+              profile: channel.profilePictureUrl
+            }
+          }
+        }))
+
+        return {
+          code: HttpStatusCodes.OK,
+          message: "videos found",
+          video: data
+        }
+
+      } catch (err) {
+        console.log(err);
+        return {
+          code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+          message: "INTERNAL_SERVER_ERROR",
           video: null
         }
       } finally {

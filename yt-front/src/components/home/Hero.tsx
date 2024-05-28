@@ -1,8 +1,31 @@
-import React, { useState } from "react";
+import { api } from "@/utils/api";
+import { useRouter } from "next/router";
+import React, { useEffect, useState } from "react";
 
 interface TagItemProps {
   title: string,
   selected: boolean
+}
+
+interface VideoObjectFromBackend {
+  id: number;
+  title: string;
+  description: string;
+  uploadDate: Date; // You could use Date if you convert the string to a Date object
+  duration: number;
+  thumbnailUrl: string | null;
+  videoUrl: string[];
+  views: number;
+  likes: number;
+  dislikes: number;
+  status: string;
+  tags: string[];
+  category: string;
+  language: string;
+  channelId: number;
+  userId: number;
+  channelName: string;
+  profile: string | null;
 }
 
 export const Hero: React.FC = () => {
@@ -20,38 +43,73 @@ export const Hero: React.FC = () => {
 
 const Videos: React.FC = () => {
 
-  const dummyVideos: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+  const [videosFromBackend, setVideosFromBackend] = useState<(VideoObjectFromBackend | undefined | null)[]>([]);
+  const router = useRouter();
+
+  const videosArray = api.video.getAllVideos.useMutation({
+    onSuccess: data => {
+      console.log(data);
+      if (data.code === 200) {
+        data.video && setVideosFromBackend(data.video);
+      }
+    }
+  })
+  
+  useEffect(() => {
+    videosArray.mutateAsync();
+  },[]);
 
   return (
     <div className="flex flex-wrap w-full mx-auto overflow-y-auto h-[85vh]" >
       {
-        dummyVideos.map((_video, key) => (
-          <div key={key} className="mx-2 my-3 " >
-            <VideoCard />
-          </div>
-        ))
+        videosFromBackend.map(video => {
+          if (video && video.thumbnailUrl && video.profile ) {
+            return (
+              <div key={video.id} onClick={() => router.push(`/video?id=${video.id}`)} className="m-4" >
+                <VideoCard 
+                  title={video.title} 
+                  views={video.views} 
+                  thumbnailUrl={video.thumbnailUrl} 
+                  channelName={video.channelName}
+                  channelProfile={video.profile}
+                />
+              </div>
+            )
+          }
+        })
       }
     </div>
   )
 }
 
-const VideoCard: React.FC = () => {
+interface VideoCardProps {
+  thumbnailUrl: string,
+  title: string,
+  channelName: string,
+  views: number,
+  channelProfile: string
+}
+
+const VideoCard: React.FC<VideoCardProps> = (props) => {
+
+  const { thumbnailUrl, title, channelName, views, channelProfile } = props;
+
   return (
     <div className="m-5 cursor-pointer w-[20vw] h-[29vh]" >
-      <img src="https://i.ytimg.com/vi/xfPAX0HUXoU/maxresdefault.jpg" alt="video-icon" className="rounded-md w-full h-[23vh]" />
+      <img src={thumbnailUrl} alt="video-icon" className="rounded-md w-full h-[23vh]" />
       <div className="flex items-center justify-evenly " >
         <div className="mt-2" >
           <img
             className="ml-2 rounded-full"
-            src={'https://yt3.ggpht.com/MeY_fGNrjVLV0PVOBN7dRWzMBS0y41YGm55LOaJ02cXV82a7Np9pYxxhHFqdYdncEy1I2cYR=s176-c-k-c0x00ffffff-no-rj-mo'}
+            src={channelProfile}
             alt={`channel-icon`}
             width={35}
             height={30} />
         </div>
         <div className="ml-6 mt-4" >
-          <p>Code with me!! Coding a system like replit in less then 4hr!</p>
-          <p className="text-sm text-gray-400" >Harkirat Singh</p>
-          <p className="text-sm text-gray-400" >42k Views . 4 hours ago</p>
+          <p>{title}</p>
+          <p className="text-sm text-gray-400" >{channelName}</p>
+          <p className="text-sm text-gray-400" >{views} Views . 4 hours ago</p>
         </div>
       </div>
     </div>
