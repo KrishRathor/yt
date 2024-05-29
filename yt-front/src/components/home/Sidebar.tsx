@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { api } from "@/utils/api";
-import { keyframes } from "@emotion/react";
 import { useRouter } from "next/router";
 
 interface CardProps {
@@ -34,7 +33,7 @@ export const Sidebar: React.FC = () => {
     { title: 'Settings', imageUrl: '/settings.png' },
     { title: 'Send Feedback', imageUrl: '/feedback.png' }
   ]
-  
+
   const router = useRouter();
   const [subscribedChannels, setSubscribedChannels] = useState<(Channel | null)[]>([]);
 
@@ -58,7 +57,12 @@ export const Sidebar: React.FC = () => {
       <span className="text-2xl ml-2 mt-8 " >You</span>
       {
         SidebarItems.map((sidebar, key) => (
-          <div key={key} className="mt-2" >
+          <div key={key} onClick={() => {
+            if (sidebar.title === "Your Channel") {
+              router.push('/mychannels');
+            }
+          }}
+            className="mt-2" >
             <Card title={sidebar.title} imageUrl={sidebar.imageUrl} />
           </div>
         ))
@@ -71,7 +75,7 @@ export const Sidebar: React.FC = () => {
             if (chnl) {
               return (
                 <div key={chnl.id} onClick={() => {
-                    router.push(`/channel?channel=${chnl.channelId}`)
+                  router.push(`/channel?channel=${chnl.channelId}`)
                 }} >
                   <ChannelCard imageUrl={chnl.profilePictureUrl ?? 'https://github.com/shadcn.png'} title={chnl.channelName} />
                 </div>
