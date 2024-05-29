@@ -61,6 +61,7 @@ model Channel {
   videos           Video[]
   subscriptions    Subscription[]   @relation("subscriptionsToChannel")
   user             User             @relation(fields: [userId], references: [id])
+  playlists        Playlist[]
 }
 
 model Comment {
@@ -81,19 +82,21 @@ model Comment {
 model Playlist {
   id               Int              @id @default(autoincrement())
   userId           Int
+  channelId        Int
   title            String
   description      String?
   creationDate     DateTime         @default(now())
   privacyStatus    String
   playlistItems    PlaylistItem[]
   user             User             @relation(fields: [userId], references: [id])
+  channel          Channel          @relation(fields: [channelId], references: [id])
 }
 
 model PlaylistItem {
   id               Int              @id @default(autoincrement())
   playlistId       Int
   videoId          Int
-  position         Int
+  position         Int              @default(autoincrement())  
 
   playlist         Playlist         @relation(fields: [playlistId], references: [id])
   video            Video            @relation(fields: [videoId], references: [id])

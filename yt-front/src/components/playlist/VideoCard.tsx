@@ -8,7 +8,7 @@ interface SideVideoCardProps {
   views: number
 }
 
-export const SideVideoCard: React.FC<SideVideoCardProps> = (props) => {
+export const PlaylistVideoCard: React.FC<SideVideoCardProps> = (props) => {
 
   const { title, thumbnailUrl, channelId, views } = props;
   const [channelName, setChannelName] = useState<string>('');

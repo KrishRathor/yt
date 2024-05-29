@@ -6,6 +6,7 @@ import { likeDislikeRouter } from "./routers/likedislike";
 import { channelRouter } from "./routers/channel";
 import { commentRouter } from "./routers/comment";
 import { subscribeRouter } from "./routers/subscription";
+import { playlistRouter } from "./routers/playlist";
 
 /**
  * This is the primary router for your server.
@@ -19,7 +20,8 @@ export const appRouter = createTRPCRouter({
   like: likeDislikeRouter,
   channel: channelRouter,
   comment: commentRouter,
-  subscriber: subscribeRouter
+  subscriber: subscribeRouter,
+  playlist: playlistRouter
 });
 
 // export type definition of API
