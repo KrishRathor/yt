@@ -2,14 +2,10 @@ import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/home/Sidebar";
 import { PlaylistSideCard } from "@/components/playlist/PlaylistSideCard";
 import { PlaylistVideoCard } from "@/components/playlist/VideoCard";
-import { videoRotuer } from "@/server/api/routers/video";
 import { api } from "@/utils/api";
 import { GetServerSidePropsContext } from "next";
-import { init } from "next/dist/compiled/webpack/webpack";
 import { useRouter } from "next/router";
-import { type } from "os";
 import React, { useEffect, useState } from "react";
-import { string } from "zod";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
 

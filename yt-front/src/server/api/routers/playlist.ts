@@ -4,6 +4,7 @@ import { nullable, number, string, z } from "zod";
 import HttpStatusCodes from "@/server/utils/HttpStatusCodes";
 import { db } from "@/server/db";
 import { resourceUsage } from "process";
+import { channel } from "diagnostics_channel";
 
 export const playlistRouter = createTRPCRouter({
   createPlaylist: publicProcedure
@@ -190,6 +191,59 @@ export const playlistRouter = createTRPCRouter({
           code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
           message: "INTERNAL_SERVER_ERROR",
           videos: null
+        }
+      } finally {
+        await db.$disconnect();
+      }
+    }),
+  getAllPlaylistsOfChannel: publicProcedure
+    .input(z.object({
+      channelId: z.number()
+    }))
+    .mutation(async opts => {
+      try {
+
+        const { channelId } = opts.input;
+
+        const channel = await db.channel.findFirst({ where: { id: channelId } });
+
+        if (!channel) {
+          return {
+            code: HttpStatusCodes.NOT_FOUND,
+            message: 'channel not found',
+            playlist: null
+          }
+        }
+
+        const playlists = await db.playlist.findMany({
+          where: {
+            channelId
+          }
+        })
+
+        const playlistsAndCover = await Promise.all(playlists.map(async playlist => {
+          const playlistItem = await db.playlistItem.findFirst({ where: { id: playlist.id } });
+          if (playlistItem) {
+            const video = await db.video.findFirst({ where: { id: playlistItem.videoId } });
+            if (video) {
+              return { playlist, image: video?.thumbnailUrl };
+
+            }
+          }
+        }))
+
+        return {
+          code: HttpStatusCodes.OK,
+          message: 'found',
+          playlist: playlistsAndCover
+        }
+
+      } catch (error) {
+        console.log(error);
+        return {
+          code: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+          message: "INTERNAL_SERVER_ERROR",
+          playlist: null
         }
       } finally {
         await db.$disconnect();

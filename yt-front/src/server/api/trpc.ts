@@ -51,7 +51,7 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
 
   const token = req.headers.authorization?.split(' ')[1];
   let username: string | null = null;
-  console.log(token);
+  console.log('token', token);
   if (token) {
     const payload = jwt.decode(token);
     console.log(payload);

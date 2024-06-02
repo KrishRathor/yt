@@ -101,16 +101,15 @@ const Channel: React.FC<ChannelProps> = (props) => {
               <p onClick={() => setSelectedTab(_prev => Tabs.Home)} className={` ${selectedTab === Tabs.Home ? 'text-white' : 'text-[#AAAAAA]'} text-xl ml-4 cursor-pointer`} >Home</p>
               <p onClick={() => setSelectedTab(_prev => Tabs.Videos)} className={` ${selectedTab === Tabs.Videos ? 'text-white' : 'text-[#AAAAAA]'} text-xl ml-4 cursor-pointer `} >Videos</p>
               <p onClick={() => setSelectedTab(_prev => Tabs.Playlists)} className={`text-xl ml-4 cursor-pointer ${selectedTab === Tabs.Playlists ? 'text-white' : 'text-[#AAAAAA]'} `} >Playlists</p>
-              <p onClick={() => setSelectedTab(_prev => Tabs.Community)} className={`text-xl ml-4 cursor-pointer ${selectedTab === Tabs.Community ? 'text-white' : 'text-[#AAAAAA]'} `} >Community</p>
             </div>
             <hr className="border border-[#AAAAAA] mt-2 " />
           </div>
           <div>
 
             {
-              selectedTab === Tabs.Home ? <ChannelHome />
+              selectedTab === Tabs.Home ? <ChannelHome channelId={channelFromBackend.channelId} channelName={channelFromBackend.channelName} />
                 : selectedTab === Tabs.Videos ? <ChannelVideo channelId={channelFromBackend.channelId} channelName={channelFromBackend.channelName} />
-                  : selectedTab === Tabs.Playlists ? <ChannelPlaylists />
+                  : selectedTab === Tabs.Playlists ? <ChannelPlaylists channelId={channelFromBackend.id} />
                     : selectedTab === Tabs.Community ? <ChannelCommunity /> : ''
             }
 

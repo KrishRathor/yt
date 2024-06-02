@@ -78,7 +78,7 @@ const Video: React.FC<VideoProps> = (props) => {
 
       <div className="flex overflow-y-auto h-[90vh]" >
           <div>
-            <div className="w-[72vw] h-[72vh]" > <ClientVideoPlayer /> </div>
+            <div className="w-[72vw] h-[72vh]" > <ClientVideoPlayer url={videoFromBackend?.videoUrl} /> </div>
             <div className="w-[72vw] h-[25vh]" >
               { videoFromBackend && <VideoDesc like={videoFromBackend.likes} title={videoFromBackend.title} channelId={videoFromBackend.channelId} /> }
                <div className="mt-16 w-[66vw] mx-auto" > { videoFromBackend && <Comments videoId={videoFromBackend?.id} /> } </div>

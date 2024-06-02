@@ -3,18 +3,18 @@ import multer from "multer";
 import cors from "cors";
 import {v4 as uuidv4} from "uuid";
 import multerS3 from "multer-s3";
-import { S3Client } from "@aws-sdk/client-s3";
+import { BucketAlreadyOwnedByYou, S3Client } from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
-import FormData from "form-data";
-import fs from "fs";
-import path from "path";
+import { getObjects } from "./monitorS3";
+import bodyParser from "body-parser";
 
 dotenv.config();
 
 const app = express()
 const port = 8080;
 app.use(cors());
+app.use(bodyParser.json());
 
 const createFileName = (filename: string): string => {
   return filename.replace(/ /g, '_') + uuidv4();
@@ -46,52 +46,38 @@ app.get('/', (_req: Request, res: Response) => {
   res.send('Hello World!')
 })
 
-app.get('/upload/getPresignedUrl', async (req, res) => {
+app.post('/upload/getPresignedUrl', async (req, res) => {
+
+  const { key, thumbnail } = req.body;
+  console.log(key, thumbnail, req.body);
+  const name = thumbnail === "1" ? `thumbnail-${key}` : `video-${key}`;
+  
   const {url, fields} = await createPresignedPost(s3, {
         Bucket: "ytvideoraw",
-        Key: `user`,
+        Key: name,
         Conditions: [
             { bucket: "ytvideoraw" },
-            ["starts-with", "$key", `user`],
-            ["content-length-range", 0, 1000000],
+            ["content-length-range", 0, 100000000],
         ],
         Fields: {
-            key: `user`,
+            key: name,
         },
         Expires: 600, // Expires in 10 minutes
     });
   res.json({fields, url});
 })
 
-app.post('/upload/video', upload.single('video'), (req: Request, res: Response) => {
-  try {
-    if (!req.file) {
-      console.log('i cam here');
-      return res.status(400).json({
-        message: 'no file provided',
-        url: null
-      });
-    }
 
-    // from here send a video to queue
-    // from there to an encoding service which makes segments of videos in multiple resolution
-    // then store this to s3
-    // encoding service can be a route here only, i don't think we need separate service for it
-    
-    console.log(process.env.AWS_SECRET_KEY); 
+let oldList: (string | undefined)[] = [];
 
-    console.log('i didnt came here', req.file);
-    res.status(201).json({
-      message: 'File uploaded successfully',
-      url: null
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send('Error uploading file.');
-  }
+app.post('/transcodevideo', async (req, res) => {
+  const { newList, newObjects } = await getObjects(oldList);
+  if (newList) oldList = newList;
+  return res.json({
+    'message': 'successfully',
+    'newObjects': newObjects
+  })
 })
-
-
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)

@@ -34,8 +34,10 @@ export const Navbar: React.FC = () => {
         </div>
 
         <div className="flex p-4 justify-between w-[12vw] items-center " >
-          <div className="p-2 hover:bg-[#272727] rounded-full" > <Image className="cursor-pointer " src={'/image.png'} alt="create-icon" width={30} height={20} /> </div>
-          <div className="p-2 hover:bg-[#272727] rounded-full"  > <Image className="cursor-pointer" src={'/image2.png'} alt="create-icon" width={30} height={10} /> </div>
+          <div onClick={() => router.push('/studio/uploadVideo')} className="p-2 hover:bg-[#272727] rounded-full" > <Image className="cursor-pointer " src={'/image.png'} alt="create-icon" width={30} height={20} /> </div>
+          {
+            //<div className="p-2 hover:bg-[#272727] rounded-full"  > <Image className="cursor-pointer" src={'/image2.png'} alt="create-icon" width={30} height={10} /> </div> 
+          }
           <div className="cursor-pointer" >
             <Avatar />
           </div>

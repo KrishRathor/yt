@@ -25,13 +25,9 @@ export const Sidebar: React.FC = () => {
 
   const SidebarItems: CardProps[] = [
     { title: 'Your Channel', imageUrl: '/channel.png' },
-    { title: 'History', imageUrl: '/history.png' },
-    { title: 'Playlists', imageUrl: '/playlist.png' }
   ]
 
   const Settings: CardProps[] = [
-    { title: 'Settings', imageUrl: '/settings.png' },
-    { title: 'Send Feedback', imageUrl: '/feedback.png' }
   ]
 
   const router = useRouter();
@@ -52,7 +48,7 @@ export const Sidebar: React.FC = () => {
 
   return (
     <div className="overflow-y-auto w-[20vw] h-[90vh] ml-2 " >
-      <Card title="Home" imageUrl="/home.png" />
+      <div onClick={() => router.push('/')} ><Card title="Home" imageUrl="/home.png" /></div>
       <hr className="border border-[#272727] mt-4" />
       <span className="text-2xl ml-2 mt-8 " >You</span>
       {
